@@ -10,7 +10,7 @@
     "collect": "node scripts/collect.mjs",
     "stats": "node scripts/stats.mjs",
     "render": "node scripts/render.mjs",
-    "test": "node --test test"
+    "test": "node --test \"test/**/*.mjs\""
   },
   "dependencies": {
     "gray-matter": "^4.0.3",
