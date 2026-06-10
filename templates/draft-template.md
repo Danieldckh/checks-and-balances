@@ -39,15 +39,3 @@ sub-themes.
 
 ### Tue 5 May
 Prose.
-
-## Methodology
-Generated from the Git commit log of all repositories under `github.com/Danieldckh`
-with activity in <Month> <Year>. Repositories audited:
-
-- **Danieldckh/<repo>** — description (<N> commits in <Month>).
-- **Danieldckh/<repo>** — no <Month> activity (last push <date>).
-
-**Scope note.** "Commits" counts merged work pushed to the default branch. It does *not*
-include design exploration, code review, deployment debugging, production hotfixes
-applied directly via Coolify, or work-in-progress branches that did not land. The true
-effort hour-count exceeds what <N> commits implies.

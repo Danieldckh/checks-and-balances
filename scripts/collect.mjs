@@ -1,10 +1,28 @@
-import { execSync } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
+
+function loadDotEnv() {
+  const envPath = resolve(ROOT, '.env');
+  if (!existsSync(envPath)) return {};
+  const out = {};
+  for (const line of readFileSync(envPath, 'utf8').split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*?)\s*$/i);
+    if (!m) continue;
+    let val = m[2];
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      val = val.slice(1, -1);
+    }
+    out[m[1]] = val;
+  }
+  return out;
+}
+
+const DOTENV = loadDotEnv();
+const TOKEN = DOTENV.GITHUB_TOKEN ?? DOTENV.GH_TOKEN ?? process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;
 
 function die(msg) {
   console.error(msg);
@@ -23,55 +41,72 @@ function parseArgs(argv) {
   return args;
 }
 
-function ensureGh() {
-  try {
-    execSync('gh --version', { stdio: 'ignore' });
-  } catch {
-    die('gh not found on PATH. Install GitHub CLI from https://cli.github.com/');
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function gh(pathAndQuery, attempt = 0) {
+  if (!TOKEN) die('No GitHub token. Put GITHUB_TOKEN in .env (see .env.example).');
+  const url = pathAndQuery.startsWith('http') ? pathAndQuery : `https://api.github.com${pathAndQuery}`;
+  // Light throttle between every request to stay under the secondary rate limit.
+  await sleep(350);
+  const res = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${TOKEN}`,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'checks-and-balances-collector',
+    },
+  });
+  if (res.status === 409) return { data: [], linkHeader: null }; // empty repo
+  // Retry secondary-rate-limit 403/429 by honoring Retry-After (or backing off).
+  if ((res.status === 403 || res.status === 429) && attempt < 5) {
+    const retryAfter = parseInt(res.headers.get('retry-after') ?? '', 10);
+    const waitMs = (isFinite(retryAfter) && retryAfter > 0 ? retryAfter : Math.min(60, 5 * 2 ** attempt)) * 1000;
+    process.stderr.write(`[rate-limited, sleeping ${Math.round(waitMs / 1000)}s] `);
+    await sleep(waitMs);
+    return gh(pathAndQuery, attempt + 1);
   }
-  try {
-    execSync('gh auth status', { stdio: 'ignore', env: ghEnv() });
-  } catch {
-    die('gh not authenticated. Run: gh auth login');
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`GitHub API ${res.status} for ${url}: ${body.slice(0, 400)}`);
   }
+  return { data: await res.json(), linkHeader: res.headers.get('link') };
 }
 
-// IMPORTANT: clear GITHUB_TOKEN from the env we pass to gh.
-// On this machine, a stale GITHUB_TOKEN is set which overrides the keyring auth
-// and makes `gh` fail with 401. Clearing it forces gh to fall back to keyring auth.
-function ghEnv() {
-  const env = { ...process.env };
-  delete env.GITHUB_TOKEN;
-  delete env.GH_TOKEN;
-  return env;
+function nextPageUrl(linkHeader) {
+  if (!linkHeader) return null;
+  for (const part of linkHeader.split(',')) {
+    const m = part.match(/<([^>]+)>;\s*rel="next"/);
+    if (m) return m[1];
+  }
+  return null;
 }
 
-function ghLines(endpoint) {
-  const cmd = `gh api --paginate "${endpoint}" -q ".[]"`;
-  const out = execSync(cmd, { encoding: 'utf8', maxBuffer: 200 * 1024 * 1024, env: ghEnv() });
-  return out.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
-}
-
-function ghOne(endpoint) {
-  return JSON.parse(execSync(`gh api "${endpoint}"`, { encoding: 'utf8', maxBuffer: 50 * 1024 * 1024, env: ghEnv() }));
+async function ghPaginate(pathAndQuery) {
+  const all = [];
+  let next = pathAndQuery;
+  while (next) {
+    const { data, linkHeader } = await gh(next);
+    if (Array.isArray(data)) all.push(...data);
+    else all.push(data);
+    next = nextPageUrl(linkHeader);
+  }
+  return all;
 }
 
 function readConfig() {
   return JSON.parse(readFileSync(resolve(ROOT, 'config.json'), 'utf8'));
 }
 
-function main() {
-  ensureGh();
+async function main() {
   const args = parseArgs(process.argv.slice(2));
   const config = readConfig();
   const owner = config.githubLogin;
 
   const fromIso = `${args.from}T00:00:00Z`;
   const toEndIso = `${args.to}T23:59:59Z`;
-  const beforeRangeIso = new Date(new Date(fromIso).getTime() - 1000).toISOString();
 
   console.error(`Listing repos owned by ${owner}...`);
-  const repos = ghLines(`/user/repos?affiliation=owner&per_page=100`)
+  const repos = (await ghPaginate(`/user/repos?affiliation=owner&per_page=100`))
     .filter(r => r.owner.login === owner);
 
   const out = {
@@ -81,53 +116,46 @@ function main() {
     repos: [],
   };
 
+  const rangeToken = `${args.from}_to_${args.to}`;
+  const outPath = resolve(ROOT, 'data', `${rangeToken}.json`);
+  mkdirSync(dirname(outPath), { recursive: true });
+  const saveCheckpoint = () => writeFileSync(outPath, JSON.stringify(out, null, 2));
+
   for (const repo of repos) {
-    console.error(`  ${repo.full_name} ...`);
+    process.stderr.write(`  ${repo.full_name} ... `);
+
+    // Skip cheaply: if repo.pushed_at predates the range, we know there are no in-range commits.
+    // pushed_at and created_at are already in the /user/repos response — no extra calls needed.
+    const pushedAt = repo.pushed_at;
+    const createdAt = repo.created_at;
+    const isNewInRange = createdAt >= fromIso;
+    const lastPushBeforeRange = pushedAt && pushedAt < fromIso ? pushedAt.slice(0, 10) : null;
+
+    if (pushedAt && pushedAt < fromIso) {
+      process.stderr.write(`inactive (last push ${lastPushBeforeRange})\n`);
+      out.repos.push({ name: repo.name, private: repo.private, isNewInRange, lastPushBeforeRange, commits: [] });
+      continue;
+    }
+
     let inRange = [];
     try {
-      inRange = ghLines(
+      inRange = await ghPaginate(
         `/repos/${repo.full_name}/commits?since=${fromIso}&until=${toEndIso}&per_page=100`,
       );
     } catch (err) {
-      // Empty repos return 409 Conflict; treat as zero commits.
-      if (!/409/.test(err.message)) throw err;
+      if (!/\b409\b/.test(err.message)) throw err;
     }
 
-    let isNewInRange = false;
-    let lastPushBeforeRange = null;
+    const commits = inRange.map(c => ({
+      sha: c.sha,
+      date: c.commit.author.date,
+      author: { login: c.author?.login ?? null, email: c.commit.author.email },
+      subject: c.commit.message.split('\n')[0],
+      body: c.commit.message.split('\n').slice(1).join('\n').trim(),
+      files: [],
+    }));
 
-    if (inRange.length === 0) {
-      try {
-        const latest = ghLines(`/repos/${repo.full_name}/commits?per_page=1`);
-        if (latest.length > 0) lastPushBeforeRange = latest[0].commit.author.date.slice(0, 10);
-      } catch (err) {
-        if (!/409/.test(err.message)) throw err;
-      }
-    } else {
-      let beforeFirst = [];
-      try {
-        beforeFirst = ghLines(`/repos/${repo.full_name}/commits?per_page=1&until=${beforeRangeIso}`);
-      } catch (err) {
-        if (!/409/.test(err.message)) throw err;
-      }
-      isNewInRange = beforeFirst.length === 0;
-      if (!isNewInRange && beforeFirst[0]) {
-        lastPushBeforeRange = beforeFirst[0].commit.author.date.slice(0, 10);
-      }
-    }
-
-    const commits = [];
-    for (const c of inRange) {
-      const detail = ghOne(`/repos/${repo.full_name}/commits/${c.sha}`);
-      commits.push({
-        sha: detail.sha,
-        date: detail.commit.author.date,
-        author: { login: detail.author?.login ?? null, email: detail.commit.author.email },
-        subject: detail.commit.message.split('\n')[0],
-        body: detail.commit.message.split('\n').slice(1).join('\n').trim(),
-        files: (detail.files || []).map(f => f.filename),
-      });
-    }
+    process.stderr.write(`${commits.length} commits in range${isNewInRange ? ' (new repo)' : ''}\n`);
 
     out.repos.push({
       name: repo.name,
@@ -136,12 +164,10 @@ function main() {
       lastPushBeforeRange,
       commits,
     });
+    saveCheckpoint();
   }
 
-  const rangeToken = `${args.from}_to_${args.to}`;
-  const outPath = resolve(ROOT, 'data', `${rangeToken}.json`);
-  mkdirSync(dirname(outPath), { recursive: true });
-  writeFileSync(outPath, JSON.stringify(out, null, 2));
+  saveCheckpoint();
   console.error(`Wrote ${outPath}`);
 }
 

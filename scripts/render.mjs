@@ -113,7 +113,9 @@ export function populateTemplate(template, vars) {
 
 export function computeOutputFilename(stats, author) {
   if (stats.singleMonth) {
-    return `${author.name}-${stats.monthLabel}-${stats.yearLabel}-Activity-Report.pdf`;
+    const fromDay = parseInt(stats.range.from.slice(-2), 10);
+    const toDay = parseInt(stats.range.to.slice(-2), 10);
+    return `${author.name}-${fromDay}-${toDay}-${stats.monthLabel}-${stats.yearLabel}-Activity-Report.pdf`;
   }
   return `${author.name}-${stats.range.from}-to-${stats.range.to}-Activity-Report.pdf`;
 }

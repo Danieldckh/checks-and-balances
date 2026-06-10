@@ -16,6 +16,10 @@ Claude follows `CLAUDE.md`:
 3. Claude writes a markdown draft to `drafts/<range>.md`.
 4. You review/edit.
 5. Say "render"; `scripts/render.mjs` produces the PDF in `out/`.
+6. Optionally, drop the final PDF back in and say "update the sheet" — Claude
+   logs the report's main focuses as completed Developer tasks in the team
+   meeting-minutes Google Sheet (existing tasks get a dated note; new ones get
+   a fresh row), driving the edits through Playwright.
 
 ## One-time setup
 

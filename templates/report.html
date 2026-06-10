@@ -5,7 +5,7 @@
 <title>{{title}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 {{tokensCss}}
 
@@ -15,71 +15,74 @@ html, body { margin: 0; padding: 0; }
 body {
   font-family: var(--font-body);
   color: var(--ink);
-  font-size: 11pt;
-  line-height: 1.5;
+  font-size: 9.5pt;
+  line-height: 1.45;
   print-color-adjust: exact;
   -webkit-print-color-adjust: exact;
 }
 
-.top-rule { height: 4px; background: var(--brand); margin: 0 0 24px; }
+.top-rule { height: 3px; background: var(--brand); margin: 0 0 22px; }
 
-.brand-band { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 36px; }
+.brand-band { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
 .brand-band .mark {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; background: var(--brand); color: white;
-  font-family: var(--font-display); font-weight: 700; font-size: 16pt;
+  width: 26px; height: 26px; background: var(--brand); color: white;
+  font-family: var(--font-display); font-weight: 700; font-size: 13pt;
   border-radius: 3px; margin-right: 10px; vertical-align: middle;
 }
 .brand-band .brand-text { display: inline-block; vertical-align: middle; }
-.brand-band .brand-line { font-weight: 700; font-size: 12pt; }
-.brand-band .brand-sub { font-size: 8pt; letter-spacing: 0.18em; color: var(--muted); text-transform: uppercase; }
-.brand-band .meta { font-size: 9pt; text-align: right; line-height: 1.7; }
+.brand-band .brand-line { font-weight: 700; font-size: 10.5pt; }
+.brand-band .brand-sub { font-size: 7pt; letter-spacing: 0.18em; color: var(--muted); text-transform: uppercase; }
+.brand-band .meta { font-size: 8pt; text-align: right; line-height: 1.7; }
 .brand-band .meta b { font-weight: 600; }
 
-.eyebrow { font-size: 9pt; letter-spacing: 0.22em; text-transform: uppercase; color: var(--eyebrow); margin-bottom: 6px; }
-h1.title { font-family: var(--font-display); font-size: 34pt; font-weight: 700; margin: 0 0 14px; line-height: 1.05; }
-.lead { font-size: 11.5pt; color: var(--ink); max-width: 80%; margin: 0 0 28px; }
+.eyebrow { font-size: 8pt; letter-spacing: 0.22em; text-transform: uppercase; color: var(--eyebrow); margin-bottom: 6px; }
+h1.title { font-family: var(--font-display); font-size: 26pt; font-weight: 700; margin: 0 0 12px; line-height: 1.1; letter-spacing: -0.01em; }
+.lead { font-size: 10pt; color: var(--ink); max-width: 80%; margin: 0 0 24px; }
 .lead p { margin: 0; }
 
-.hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 36px; }
-.hero-stats .stat { background: var(--brand-tint); border-radius: 4px; padding: 14px 16px; }
-.hero-stats .stat .num { font-family: var(--font-display); font-weight: 700; font-size: 26pt; line-height: 1; color: var(--brand); }
-.hero-stats .stat .label { font-size: 8pt; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); margin-top: 8px; }
+.hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 32px; }
+.hero-stats .stat { background: var(--brand-tint); border-radius: 4px; padding: 12px 14px; }
+.hero-stats .stat .num { font-family: var(--font-display); font-weight: 700; font-size: 24pt; line-height: 1; color: var(--brand); letter-spacing: -0.02em; }
+.hero-stats .stat .label { font-size: 7pt; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-top: 8px; line-height: 1.35; }
 
-hr.sep { border: 0; border-top: 1px solid var(--rule); margin: 28px 0; }
+hr.sep { border: 0; border-top: 1px solid var(--rule); margin: 24px 0; }
 
-h2.section { font-size: 11pt; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; margin: 0 0 14px; border-bottom: 1px solid var(--rule); padding-bottom: 8px; }
+h2.section { font-size: 9.5pt; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; margin: 0 0 12px; border-bottom: 1px solid var(--rule); padding-bottom: 7px; }
 
-p { margin: 0 0 12px; }
+p { margin: 0 0 10px; }
 
-.initiatives { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 28px; }
-.card { border: 1px solid var(--rule); border-radius: 4px; padding: 14px 16px; page-break-inside: avoid; }
-.card .eyebrow { color: var(--eyebrow); margin-bottom: 4px; font-size: 8pt; }
-.card .card-title { font-weight: 700; font-size: 12pt; margin: 0 0 8px; }
-.card p { font-size: 10.5pt; margin: 0 0 8px; }
+.initiatives { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.card { border: 1px solid var(--rule); border-radius: 4px; padding: 12px 14px; background: #fff; page-break-inside: avoid; }
+.card .eyebrow { color: var(--eyebrow); margin-bottom: 4px; font-size: 7pt; letter-spacing: 0.2em; font-weight: 600; }
+.card .card-title { font-family: var(--font-display); font-weight: 700; font-size: 11pt; line-height: 1.25; margin: 0 0 6px; }
+.card p { font-size: 9pt; margin: 0 0 6px; }
 .card p:last-child { margin-bottom: 0; }
-.card code { font-family: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace; font-size: 9.5pt; }
+.card code { font-family: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace; font-size: 8.5pt; }
 
-.chart { margin: 8px 0 22px; page-break-inside: avoid; }
-.chart svg { width: 100%; height: 140px; display: block; }
+.chart { margin: 8px 0 20px; page-break-inside: avoid; }
+.chart svg { width: 100%; height: 130px; display: block; }
+.chart svg rect.bar { fill: var(--brand); }
+.chart svg .zero circle { fill: var(--bar-zero); opacity: 0.8; }
 
-table.daily { width: 100%; border-collapse: collapse; font-size: 10pt; }
-table.daily thead th { background: var(--brand); color: white; text-align: left; padding: 10px 12px; font-size: 8.5pt; letter-spacing: 0.18em; text-transform: uppercase; }
-table.daily tbody td { padding: 14px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+table.daily { width: 100%; border-collapse: collapse; font-size: 9pt; }
+table.daily thead th { background: var(--brand); color: white; text-align: left; padding: 9px 11px; font-size: 7.5pt; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600; }
+table.daily tbody td { padding: 12px 11px; border-bottom: 1px solid var(--rule); vertical-align: top; }
 table.daily tbody tr { page-break-inside: avoid; }
-table.daily .col-date { width: 110px; font-weight: 600; }
-table.daily .col-commits { width: 90px; }
-table.daily .commit-pill { display: inline-block; min-width: 22px; height: 22px; line-height: 22px; padding: 0 6px; text-align: center; background: var(--brand-tint); color: var(--brand); border-radius: 11px; font-weight: 600; font-size: 9.5pt; }
-table.daily code { font-family: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace; font-size: 9.5pt; }
-table.daily p { margin: 0 0 8px; }
+table.daily tbody tr:nth-child(even) td { background: var(--brand-tint-soft); }
+table.daily .col-date { width: 100px; font-weight: 600; color: var(--brand); }
+table.daily .col-commits { width: 80px; }
+table.daily .commit-pill { display: inline-block; min-width: 20px; height: 20px; line-height: 20px; padding: 0 6px; text-align: center; background: var(--brand-tint); color: var(--brand); border-radius: 10px; font-weight: 600; font-size: 8.5pt; }
+table.daily code { font-family: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace; font-size: 8.5pt; }
+table.daily p { margin: 0 0 7px; }
 table.daily p:last-child { margin-bottom: 0; }
 
-.methodology p { font-size: 10.5pt; }
-.methodology ul { margin: 8px 0 16px; padding-left: 20px; }
-.methodology li { margin-bottom: 6px; }
-.scope-note { border-left: 3px solid var(--brand); background: #f5f7f1; padding: 10px 12px; font-size: 9.5pt; color: var(--ink); margin-top: 10px; }
+.methodology p { font-size: 9pt; }
+.methodology ul { margin: 8px 0 14px; padding-left: 20px; }
+.methodology li { margin-bottom: 5px; font-size: 9pt; }
+.scope-note { border-left: 3px solid var(--brand); background: var(--brand-tint-soft); padding: 10px 12px; font-size: 8.5pt; color: var(--ink); margin-top: 12px; border-radius: 0 3px 3px 0; }
 
-.footer-rule { border-top: 1px solid var(--rule); margin-top: 28px; padding-top: 10px; display: flex; justify-content: space-between; font-size: 9pt; color: var(--muted); }
+.footer-rule { border-top: 1px solid var(--rule); margin-top: 24px; padding-top: 9px; display: flex; justify-content: space-between; font-size: 8pt; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -127,9 +130,6 @@ table.daily p:last-child { margin-bottom: 0; }
   <thead><tr><th class="col-date">Date</th><th class="col-commits">Commits</th><th>Summary of Work Shipped</th></tr></thead>
   <tbody>{{daysHtml}}</tbody>
 </table>
-
-<h2 class="section">Methodology &amp; Verification</h2>
-<div class="methodology">{{methodologyHtml}}</div>
 
 <div class="footer-rule">
   <div>{{footerLeft}}</div>
