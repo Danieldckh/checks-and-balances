@@ -101,16 +101,18 @@ fall back to extracting the PDF text only if the draft is gone.
    "Mahindra CRM lead-list" initiative).
 
 3. **Decide per focus:**
-   - **Already exists as a Developer task** → append to its **Notes** (column H, keep existing
-     text): `DD/MM <one quick sentence on what was done>` — date is today, day/month only, no year
-     (e.g. `22/05 Rebuilt the autofill engine and shipped the category fix`). Match the existing
-     notes style in the sheet.
+   - **Already exists as a Developer task** (complete or not) → **append to the END of its Notes**
+     (column H, existing text stays first, new note last):
+     `DD/MM <one quick sentence on what was done>` — date is today, day/month only, no year
+     (e.g. `22/05 Rebuilt the autofill engine and shipped the category fix`).
    - **Doesn't exist** → add a **new Developer row directly underneath the last existing Developer
-     row** (bottom block), filled as:
-     `Department=Developer · B=today's date · Task=<initiative title, phrased like the other rows> ·
-     Stakeholder=Daniel · Deadline Date=<the date the work was completed — the last day in the
-     report's daily breakdown that mentions this focus; fall back to the report's end date> ·
-     Priority=High · Status=Complete`.
+     row** (bottom block). **Keep the Task cell short and simple** — project + a few words, like the
+     other rows (e.g. `Mahindra CRM - Performance pass`) — and put the detail in **Notes** as
+     `DD/MM <what was done, one or two clauses>`. Fill the row as:
+     `Department=Developer · B=today's date · Task=<short title> · Stakeholder=Daniel ·
+     Deadline Date=<the date the work was completed — the last day in the report's daily breakdown
+     that mentions this focus; fall back to the report's end date> · Priority=High ·
+     Status=Complete · Notes=<DD/MM detail>`.
 
 4. **Make the edits with Playwright** (the only part that needs a browser):
    - Launch **visible** Chromium with a **persistent profile** so the Google login survives runs:
