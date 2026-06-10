@@ -29,23 +29,43 @@ If the request is genuinely ambiguous (e.g., "make me a report" with no date), a
    ```
    Writes `data/<from>_to_<to>.json`. Auth: the script reads `GITHUB_TOKEN` from `.env` (preferred). If `.env` is absent, it strips the stale process `GITHUB_TOKEN` and falls back to `gh` keyring. If it errors with `gh not authenticated`, stop and tell Daniel to add a token to `.env` (see `.env.example`) or run `gh auth login`.
 
-3. **Compute stats:**
+3. **Gather the Obsidian daily logs:**
+   ```
+   node scripts/logs.mjs --from <from> --to <to>
+   ```
+   Writes `data/<from>_to_<to>.logs.md` — the day-by-day work log from the Obsidian vault
+   (`OBSIDIAN_DAILY_LOG_DIR` in `.env`). Read it alongside the commits: the logs carry the
+   *why* and the cross-repo story (deploys, integrations, decisions, non-commit work like DNS or
+   server ops) that commit subjects alone miss. If the folder is missing or empty for the range,
+   say so and continue on commits alone.
+
+4. **Compute stats:**
    ```
    node scripts/stats.mjs --range <from>_to_<to>
    ```
    Writes `data/<from>_to_<to>.stats.json`. Read it — you need the per-repo commit counts, the daily volume, and the inactive-repo list to write the narrative.
 
-4. **Draft the narrative.** Copy `templates/draft-template.md` to `drafts/<from>_to_<to>.md` and fill it in. Follow the **Drafting guide** below. Read the JSON files from steps 2 and 3 to ground the prose in real data — quote real commit subjects, file paths, and code identifiers.
+5. **Project checklist — let Daniel choose what goes in.** From the commits (step 2) and the daily
+   logs (step 3), identify the **main projects / work streams** of the range (roughly: each repo or
+   initiative with meaningful activity — the candidate initiative cards). Present them to Daniel as
+   a **multi-select checklist** (use the AskUserQuestion tool with `multiSelect: true`; if there are
+   more than 4 candidates, split across multiple checklist questions in the same call), each option
+   labelled with the project name and a one-line summary of what was done + commit count. Daniel
+   ticks the ones to include. **Only the ticked projects become initiative cards** in the draft; the
+   daily breakdown and stats still cover the whole range, but keep the narrative focus on the
+   selected projects. Unticked work may be mentioned in passing in the executive summary at most.
 
-5. **Hand off to Daniel.** Tell him the draft is at `drafts/<from>_to_<to>.md`. Stop and wait. He may edit the file directly. When he says "render", "looks good", "go", or similar, **re-read the draft from disk** in case he edited it, then continue.
+6. **Draft the narrative.** Copy `templates/draft-template.md` to `drafts/<from>_to_<to>.md` and fill it in. Follow the **Drafting guide** below. Read the JSON files from steps 2 and 4 **and the daily-log digest from step 3** to ground the prose in real data — quote real commit subjects, file paths, and code identifiers, and use the daily logs for deploys, integrations, and decisions that don't show up as commits.
 
-6. **Render the PDF:**
+7. **Hand off to Daniel.** Tell him the draft is at `drafts/<from>_to_<to>.md`. Stop and wait. He may edit the file directly. When he says "render", "looks good", "go", or similar, **re-read the draft from disk** in case he edited it, then continue.
+
+8. **Render the PDF:**
    ```
    node scripts/render.mjs --range <from>_to_<to>
    ```
    The PDF path is printed on stdout. Repeat it back to Daniel and stop.
 
-7. **Update the meeting-minutes sheet (on request).** After the PDF is final, Daniel may drop the
+9. **Update the meeting-minutes sheet (on request).** After the PDF is final, Daniel may drop the
    PDF into the conversation and say "update the sheet" (or similar). Follow **Updating the
    meeting-minutes sheet** below.
 
@@ -203,6 +223,7 @@ If any of these fail, stop and tell Daniel what's missing.
 
 - `config.json` — author, GitHub username, brand block.
 - `scripts/collect.mjs` — gh → `data/<range>.json`.
+- `scripts/logs.mjs` — Obsidian daily logs → `data/<range>.logs.md`.
 - `scripts/stats.mjs` — `data/<range>.json` → `data/<range>.stats.json`.
 - `scripts/render.mjs` — draft + stats → `out/<Author>-<...>-Activity-Report.pdf`.
 - `templates/report.html`, `templates/_tokens.css` — visual design.

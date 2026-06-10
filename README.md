@@ -12,11 +12,16 @@ In Claude Code, in this folder, say something like:
 Claude follows `CLAUDE.md`:
 
 1. `scripts/collect.mjs` pulls commits via `gh`.
-2. `scripts/stats.mjs` computes hero numbers + daily volume.
-3. Claude writes a markdown draft to `drafts/<range>.md`.
-4. You review/edit.
-5. Say "render"; `scripts/render.mjs` produces the PDF in `out/`.
-6. Optionally, drop the final PDF back in and say "update the sheet" — Claude
+2. `scripts/logs.mjs` pulls the matching Obsidian daily-log entries
+   (`OBSIDIAN_DAILY_LOG_DIR` in `.env`).
+3. `scripts/stats.mjs` computes hero numbers + daily volume.
+4. Claude shows the range's main projects as a tick-box checklist — you choose
+   which ones make it into the report.
+5. Claude writes a markdown draft to `drafts/<range>.md` covering the ticked
+   projects, grounded in commits + daily logs.
+6. You review/edit.
+7. Say "render"; `scripts/render.mjs` produces the PDF in `out/`.
+8. Optionally, drop the final PDF back in and say "update the sheet" — Claude
    logs the report's main focuses as completed Developer tasks in the team
    meeting-minutes Google Sheet (existing tasks get a dated note; new ones get
    a fresh row), driving the edits through Playwright.
