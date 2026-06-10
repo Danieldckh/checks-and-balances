@@ -78,8 +78,14 @@ https://docs.google.com/spreadsheets/d/1aXewHRCc1DUnFUTLGcew1Z84_oLwLEwHh_Nbs7pU
 ```
 
 Columns: `A Department | B Meeting date | C Task | D Stakeholder | E Deadline Date | F Priority | G Status | H Notes`.
-Rows are grouped in meeting-date blocks; the newest block is at the bottom. Only touch rows whose
-Department is **Developer** (that's Daniel). Never edit other departments' rows.
+Rows are grouped in meeting-date blocks; the newest block is at the bottom.
+
+**HARD RULE — only ever touch rows where Department == `Developer`.** Never edit, overwrite, move,
+or insert into any other department's rows (Video, Production, Design, JagLekker, Social Media, …),
+no matter how related a task looks. New rows must be created as `Developer` rows in empty cells at
+the bottom of the sheet — never by inserting between or displacing existing rows. Before committing
+any edit, confirm the target row's column A reads `Developer` (or is an empty new row you are
+creating as `Developer`).
 
 ### Trigger
 
