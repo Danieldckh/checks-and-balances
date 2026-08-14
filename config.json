@@ -7,5 +7,50 @@
     "mark": "D"
   },
   "footerLeft": "Daniel · Danieldckh · ProAgri Engineering",
-  "footerRightSuffix": "Source: GitHub commit log"
+  "footerRightSuffix": "Source: GitHub commit log",
+
+  "timesheet": {
+    "tzOffsetMinutes": 120,
+    "blockCapMinutes": 60,
+    "fallbackProject": "Life OS / Ops",
+    "dayOverrides": {
+      "2026-06-26": { "end": "12:30" },
+      "2026-06-29": { "start": "04:00" }
+    },
+    "excludeRepos": ["qr-snippet-app", "ScanStory", "poetry", "tender-core-app", "tender-core-site", "onlynoms", "sable-and-sage"],
+    "palette": ["#1f4d2c", "#2d6a3f", "#4e9a5f", "#7bbf8a", "#a9d6b3", "#c79b3b", "#d8b25a", "#8a7a52"],
+    "repoToProject": {
+      "Agri360": "Agri360",
+      "checklist-Agri360": "Agri360",
+      "agri360-client-portal": "Agri360",
+      "agri360-request-builder": "Agri360",
+      "tickets-app": "Agri360",
+      "secure-signature-page": "Agri360",
+      "esign-booking-form": "Agri360",
+      "Booking-Form-Esign": "Agri360",
+      "Editable-booking-form": "Agri360",
+      "Client-Lookup": "Agri360",
+      "Checklist": "Agri360",
+      "mahindra-crm": "Mahindra CRM",
+      "mahindra-dealership-map": "Mahindra CRM",
+      "postpilot": "PostPilot",
+      "postiz-docker-compose": "PostPilot",
+      "website-scraper": "Website Scraper",
+      "book-george": "ProAgri Meet",
+      "proagri-hub-site": "ProAgri Hub",
+      "proagri-leave-form": "Leave Form",
+      "checks-and-balances": "Checks & Balances"
+    },
+    "logRules": [
+      { "project": "__EXCLUDE__", "any": ["qr-snippet", "scanstory", "scan story", "poetry", "tender core", "tender-core", "tendercall", "onlynoms", "only noms", "mici", "paw note", "cristiano", "meownaldo", "sable", "sage", "sable-and-sage", "silver moon", "silvermoon"] },
+      { "project": "Mahindra CRM", "any": ["mahindra"] },
+      { "project": "PostPilot", "any": ["postpilot", "postiz"] },
+      { "project": "Website Scraper", "any": ["website-scraper", "website scraper", "scraper", "alt-text", "alt text"] },
+      { "project": "ProAgri Meet", "any": ["book george", "book-george", "proagri meet", "scheduler", "schedular"] },
+      { "project": "ProAgri Hub", "any": ["proagri hub", "proagri-hub", "hub site"] },
+      { "project": "Leave Form", "any": ["leave-form", "leave form"] },
+      { "project": "Checks & Balances", "any": ["checks-and-balances", "checks and balances", "activity report", "time allocation", "timesheet"] },
+      { "project": "Agri360", "any": ["agri360", "agri 360", "agri4all", "checklist", "auction", "ticket", "workflow builder", "deliverable", "booking form", "booking-form", "e-sign", "esign", "secure-signature", "production sheet", "video dept", "video department"] }
+    ]
+  }
 }
