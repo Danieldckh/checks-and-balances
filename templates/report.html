@@ -82,6 +82,23 @@ table.daily p:last-child { margin-bottom: 0; }
 .methodology li { margin-bottom: 5px; font-size: 9pt; }
 .scope-note { border-left: 3px solid var(--brand); background: var(--brand-tint-soft); padding: 10px 12px; font-size: 8.5pt; color: var(--ink); margin-top: 12px; border-radius: 0 3px 3px 0; }
 
+.time-alloc { display: flex; align-items: center; gap: 28px; margin: 6px 0 4px; page-break-inside: avoid; }
+.time-alloc .donut { flex: 0 0 150px; }
+.time-alloc .donut svg { width: 150px; height: 150px; display: block; }
+.time-alloc .hours { flex: 1; }
+table.hours-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+table.hours-table td { padding: 6px 4px; border-bottom: 1px solid var(--rule); }
+table.hours-table tr:last-child td { border-bottom: 0; }
+.hours-table .ts-swatch { font-weight: 600; }
+.hours-table .ts-swatch span { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 9px; vertical-align: middle; }
+.hours-table .ts-hours { text-align: right; width: 70px; color: var(--brand); font-weight: 600; font-family: var(--font-display); }
+.hours-table .ts-pct { text-align: right; width: 56px; color: var(--muted); }
+
+table.timesheet .col-window { width: 110px; font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; }
+table.timesheet .ts-chip { display: inline-block; background: var(--brand-tint-soft); border: 1px solid var(--rule); border-radius: 10px; padding: 1px 8px 1px 6px; font-size: 8pt; margin: 0 4px 4px 0; white-space: nowrap; }
+table.timesheet .ts-chip i { display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+table.timesheet .ts-off { font-size: 6.5pt; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); background: var(--brand-tint-soft); border-radius: 3px; padding: 1px 4px; margin-left: 4px; }
+
 .footer-rule { border-top: 1px solid var(--rule); margin-top: 24px; padding-top: 9px; display: flex; justify-content: space-between; font-size: 8pt; color: var(--muted); }
 </style>
 </head>
@@ -117,6 +134,8 @@ table.daily p:last-child { margin-bottom: 0; }
 
 <hr class="sep">
 
+{{timeAllocationHtml}}
+
 <h2 class="section">Executive Summary</h2>
 <div>{{executiveSummaryHtml}}</div>
 
@@ -130,6 +149,8 @@ table.daily p:last-child { margin-bottom: 0; }
   <thead><tr><th class="col-date">Date</th><th class="col-commits">Commits</th><th>Summary of Work Shipped</th></tr></thead>
   <tbody>{{daysHtml}}</tbody>
 </table>
+
+{{timesheetSectionHtml}}
 
 <div class="footer-rule">
   <div>{{footerLeft}}</div>

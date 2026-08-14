@@ -7,3 +7,6 @@ out/
 .env
 .env.local
 .playwright-profile/
+
+# graphify generated knowledge graph (local artifact)
+graphify-out/

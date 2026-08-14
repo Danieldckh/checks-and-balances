@@ -1,9 +1,10 @@
 import matter from 'gray-matter';
 import { marked } from 'marked';
 import { chromium } from 'playwright';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { deriveTimesheet } from './timesheet.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -111,6 +112,85 @@ export function populateTemplate(template, vars) {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => (key in vars ? String(vars[key]) : ''));
 }
 
+// ---- Time-allocation rendering -------------------------------------------
+
+function polar(cx, cy, r, frac) {
+  const a = 2 * Math.PI * frac - Math.PI / 2; // start at 12 o'clock
+  return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+}
+
+export function buildDonutSvg(byProject, palette, opts = {}) {
+  const size = opts.size ?? 150;
+  const cx = size / 2, cy = size / 2;
+  const rOuter = size / 2 - 4;
+  const rInner = rOuter * 0.58;
+  const total = byProject.reduce((s, p) => s + p.hours, 0) || 1;
+
+  const parts = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}">`];
+  let acc = 0;
+  byProject.forEach((p, i) => {
+    const start = acc / total;
+    acc += p.hours;
+    const end = acc / total;
+    const color = palette[i % palette.length];
+    if (end - start >= 0.999) {
+      parts.push(`<circle cx="${cx}" cy="${cy}" r="${(rOuter + rInner) / 2}" fill="none" stroke="${color}" stroke-width="${rOuter - rInner}"/>`);
+      return;
+    }
+    const [x1, y1] = polar(cx, cy, rOuter, start);
+    const [x2, y2] = polar(cx, cy, rOuter, end);
+    const [x3, y3] = polar(cx, cy, rInner, end);
+    const [x4, y4] = polar(cx, cy, rInner, start);
+    const large = end - start > 0.5 ? 1 : 0;
+    parts.push(
+      `<path d="M ${x1.toFixed(2)} ${y1.toFixed(2)} ` +
+      `A ${rOuter} ${rOuter} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} ` +
+      `L ${x3.toFixed(2)} ${y3.toFixed(2)} ` +
+      `A ${rInner} ${rInner} 0 ${large} 0 ${x4.toFixed(2)} ${y4.toFixed(2)} Z" fill="${color}"/>`
+    );
+  });
+  parts.push(`<text x="${cx}" y="${cy - 4}" text-anchor="middle" font-family="Poppins, sans-serif" font-size="20" font-weight="700" fill="#1f4d2c">${Math.round(total * 10) / 10}</text>`);
+  parts.push(`<text x="${cx}" y="${cy + 12}" text-anchor="middle" font-family="Poppins, sans-serif" font-size="7" letter-spacing="0.12em" fill="#5a6068">HOURS</text>`);
+  parts.push(`</svg>`);
+  return parts.join('');
+}
+
+export function renderHoursTableHtml(byProject, palette) {
+  const rows = byProject.map((p, i) => {
+    const color = palette[i % palette.length];
+    return `<tr>
+      <td class="ts-swatch"><span style="background:${color}"></span>${htmlEscape(p.name)}</td>
+      <td class="ts-hours">${p.hours}h</td>
+      <td class="ts-pct">${Math.round(p.pct * 100)}%</td>
+    </tr>`;
+  }).join('');
+  return `<table class="hours-table"><tbody>${rows}</tbody></table>`;
+}
+
+export function renderTimesheetHtml(timesheet, palette) {
+  const colorOf = name => {
+    const i = timesheet.byProject.findIndex(p => p.name === name);
+    return palette[(i < 0 ? 0 : i) % palette.length];
+  };
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const dows = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  return timesheet.days.filter(d => d.hours > 0).map(d => {
+    const dt = new Date(`${d.date}T12:00:00Z`);
+    const label = `${dows[dt.getUTCDay()]} ${dt.getUTCDate()} ${months[dt.getUTCMonth()]}`;
+    const win = d.window ? `${d.window.start}&ndash;${d.window.end}` : '';
+    const chips = Object.entries(d.perProject)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, h]) => `<span class="ts-chip"><i style="background:${colorOf(name)}"></i>${htmlEscape(name)} ${h}h</span>`)
+      .join(' ');
+    return `<tr>
+      <td class="col-date">${label}</td>
+      <td class="col-window">${win}</td>
+      <td class="col-commits"><span class="commit-pill">${d.hours}h</span></td>
+      <td>${chips}</td>
+    </tr>`;
+  }).join('\n');
+}
+
 export function computeOutputFilename(stats, author) {
   if (stats.singleMonth) {
     const fromDay = parseInt(stats.range.from.slice(-2), 10);
@@ -167,7 +247,9 @@ function renderMethodologyHtml(methodologyMd) {
   return `${marked.parse(before)}<div class="scope-note"><b>Scope note.</b> ${marked.parseInline(note)}</div>`;
 }
 
-export function renderDraftToHtml({ draft, stats, config, tokensCss, template }) {
+export function renderDraftToHtml({ draft, stats, config, tokensCss, template, timesheet }) {
+  const palette = config.timesheet?.palette ?? ['#1f4d2c'];
+  const hasTimesheet = timesheet && timesheet.byProject.length > 0;
   return populateTemplate(template, {
     tokensCss,
     title: htmlEscape(draft.frontmatter.title ?? ''),
@@ -189,7 +271,26 @@ export function renderDraftToHtml({ draft, stats, config, tokensCss, template })
     methodologyHtml: renderMethodologyHtml(draft.methodology),
     footerLeft: htmlEscape(config.footerLeft),
     footerRightSuffix: htmlEscape(config.footerRightSuffix),
+    timeAllocationHtml: hasTimesheet ? renderTimeAllocationBlock(timesheet, palette) : '',
+    timesheetSectionHtml: hasTimesheet ? renderTimesheetSection(timesheet, palette) : '',
   });
+}
+
+function renderTimeAllocationBlock(timesheet, palette) {
+  return `<h2 class="section">Time Allocation</h2>
+<div class="time-alloc">
+  <div class="donut">${buildDonutSvg(timesheet.byProject, palette)}</div>
+  <div class="hours">${renderHoursTableHtml(timesheet.byProject, palette)}</div>
+</div>
+<hr class="sep">`;
+}
+
+function renderTimesheetSection(timesheet, palette) {
+  return `<h2 class="section">Timesheet</h2>
+<table class="daily timesheet">
+  <thead><tr><th class="col-date">Day</th><th class="col-window">Active Window</th><th class="col-commits">Hours</th><th>Project Split</th></tr></thead>
+  <tbody>${renderTimesheetHtml(timesheet, palette)}</tbody>
+</table>`;
 }
 
 function parseArgs(argv) {
@@ -209,8 +310,27 @@ async function main() {
   const template = readFileSync(resolve(ROOT, 'templates', 'report.html'), 'utf8');
   const tokensCss = readFileSync(resolve(ROOT, 'templates', '_tokens.css'), 'utf8');
 
+  // Time Allocation + Timesheet are a permanent part of every report. If the
+  // timesheet step wasn't run, build it inline now so the layout never gets
+  // skipped.
+  const tsPath = resolve(ROOT, 'data', `${range}.timesheet.json`);
+  let timesheet;
+  if (existsSync(tsPath)) {
+    timesheet = JSON.parse(readFileSync(tsPath, 'utf8'));
+  } else if (config.timesheet) {
+    const dataPath = resolve(ROOT, 'data', `${range}.json`);
+    const logsPath = resolve(ROOT, 'data', `${range}.logs.md`);
+    const rangeData = JSON.parse(readFileSync(dataPath, 'utf8'));
+    const logsMd = existsSync(logsPath) ? readFileSync(logsPath, 'utf8') : null;
+    timesheet = deriveTimesheet(rangeData, logsMd, config.timesheet);
+    writeFileSync(tsPath, JSON.stringify(timesheet, null, 2));
+    console.error(`Timesheet was missing — built it inline (${timesheet.totalHours}h)`);
+  } else {
+    timesheet = null;
+  }
+
   const draft = parseDraft(draftSrc);
-  const html = renderDraftToHtml({ draft, stats, config, tokensCss, template });
+  const html = renderDraftToHtml({ draft, stats, config, tokensCss, template, timesheet });
 
   const htmlPath = resolve(ROOT, 'data', `${range}.rendered.html`);
   mkdirSync(dirname(htmlPath), { recursive: true });
