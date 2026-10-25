@@ -297,13 +297,14 @@ function parseArgs(argv) {
   const args = {};
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--range') args.range = argv[++i];
+    else if (argv[i] === '--no-hours') args.noHours = true;
   }
-  if (!args.range) { console.error('Usage: render.mjs --range <from>_to_<to>'); process.exit(1); }
+  if (!args.range) { console.error('Usage: render.mjs --range <from>_to_<to> [--no-hours]'); process.exit(1); }
   return args;
 }
 
 async function main() {
-  const { range } = parseArgs(process.argv.slice(2));
+  const { range, noHours } = parseArgs(process.argv.slice(2));
   const config = JSON.parse(readFileSync(resolve(ROOT, 'config.json'), 'utf8'));
   const draftSrc = readFileSync(resolve(ROOT, 'drafts', `${range}.md`), 'utf8');
   const stats = JSON.parse(readFileSync(resolve(ROOT, 'data', `${range}.stats.json`), 'utf8'));
@@ -315,7 +316,12 @@ async function main() {
   // skipped.
   const tsPath = resolve(ROOT, 'data', `${range}.timesheet.json`);
   let timesheet;
-  if (existsSync(tsPath)) {
+  if (noHours) {
+    // --no-hours: caller explicitly opted out of the Time Allocation + Timesheet
+    // sections for this run. The layout law is unchanged for every other report.
+    timesheet = null;
+    console.error('--no-hours: Time Allocation + Timesheet omitted');
+  } else if (existsSync(tsPath)) {
     timesheet = JSON.parse(readFileSync(tsPath, 'utf8'));
   } else if (config.timesheet) {
     const dataPath = resolve(ROOT, 'data', `${range}.json`);
